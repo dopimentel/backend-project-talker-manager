@@ -34,6 +34,16 @@ const writeFile = async (content) => {
   await fs.writeFile(TALKER_PATH, JSON.stringify(content));
 };
 
+app.get('/talker/search', validateToken, async (req, res) => {
+  const { q } = req.query;
+  const talkers = await readFile();
+  if (q) {
+    const filteredTalkers = talkers.filter((talk) => talk.name.includes(q));
+    return res.status(HTTP_OK_STATUS).json(filteredTalkers);
+  }
+  res.status(HTTP_OK_STATUS).json(talkers);
+});
+
 app.get('/talker', async (_req, res) => {
   const talkers = await readFile();
   res.status(HTTP_OK_STATUS).json(talkers);
