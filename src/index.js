@@ -11,6 +11,7 @@ const app = express();
 app.use(express.json());
 
 const HTTP_OK_STATUS = 200;
+const NO_CONTENT_STATUS = 204;
 const NOT_FOUND_STATUS = 404;
 const PORT = process.env.PORT || '3001';
 const TALKER_PATH = path.resolve(__dirname, './talker.json');
@@ -89,6 +90,18 @@ app.put(
   res.status(HTTP_OK_STATUS).json(newTalker);
 },
 );
+
+app.delete('/talker/:id', validateToken, async (req, res) => {
+  const { id } = req.params;
+  const talkers = await readFile();
+  const talkerIndex = talkers.findIndex((talk) => talk.id === parseInt(id, 10));
+  if (talkerIndex === -1) {
+    return res.status(NOT_FOUND_STATUS).json({ message: 'Pessoa palestrante não encontrada' });
+  }
+  talkers.splice(talkerIndex, 1);
+  await writeFile(talkers);
+  res.sendStatus(NO_CONTENT_STATUS);
+});
 
 app.listen(PORT, () => {
   console.log('Online');
