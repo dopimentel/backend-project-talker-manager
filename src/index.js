@@ -1,6 +1,7 @@
 const express = require('express');
 const fs = require('fs').promises;
 const path = require('path');
+const crypto = require('crypto');
 
 const app = express();
 app.use(express.json());
@@ -8,6 +9,8 @@ app.use(express.json());
 const HTTP_OK_STATUS = 200;
 const NOT_FOUND_STATUS = 404;
 const PORT = process.env.PORT || '3001';
+
+const generateToken = () => crypto.randomBytes(8).toString('hex');
 
 // não remova esse endpoint, e para o avaliador funcionar
 app.get('/', (_request, response) => {
@@ -37,6 +40,14 @@ app.get('/talker/:id', async (req, res) => {
     return res.status(NOT_FOUND_STATUS).json({ message: 'Pessoa palestrante não encontrada' });
   }
   res.status(HTTP_OK_STATUS).json(talker);
+});
+
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+  if (email == '' || password == '') {
+    return res.status(HTTP_OK_STATUS).json({ message: 'Login ou senha inválidos' });
+  }
+  res.status(HTTP_OK_STATUS).json({ token: generateToken() });
 });
 
 app.listen(PORT, () => {
