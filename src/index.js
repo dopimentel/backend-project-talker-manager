@@ -2,6 +2,7 @@ const express = require('express');
 const fs = require('fs').promises;
 const path = require('path');
 const crypto = require('crypto');
+const validateLogin = require('./middlewares/validateLogin');
 
 const app = express();
 app.use(express.json());
@@ -42,11 +43,7 @@ app.get('/talker/:id', async (req, res) => {
   res.status(HTTP_OK_STATUS).json(talker);
 });
 
-app.post('/login', async (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password) {
-    return res.status(HTTP_OK_STATUS).json({ message: 'Login ou senha inválidos' });
-  }
+app.post('/login', validateLogin, async (req, res) => {
   res.status(HTTP_OK_STATUS).json({ token: generateToken() });
 });
 
