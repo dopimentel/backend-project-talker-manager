@@ -3,7 +3,9 @@ const fs = require('fs').promises;
 const path = require('path');
 const crypto = require('crypto');
 const validateLogin = require('./middlewares/validateLogin');
-const validateTalker = require('./middlewares/validateTalker');
+const { 
+  validateToken, validateName, validateAge, validateWachedAt, validateRate, 
+} = require('./middlewares/validateTalker');
 
 const app = express();
 app.use(express.json());
@@ -51,13 +53,21 @@ app.post('/login', validateLogin, async (req, res) => {
   res.status(HTTP_OK_STATUS).json({ token: generateToken() });
 });
 
-app.post('/talker', validateTalker, async (req, res) => {
-  const talkers = await readFile();
-  const newTalker = { ...req.body, id: talkers.length + 1 };
-  talkers.push(newTalker);
-  await writeFile(talkers);
-  res.status(201).json(newTalker);
-});
+app.post(
+  '/talker',
+  validateToken,
+  validateName,
+  validateAge,
+  validateWachedAt,
+  validateRate,
+  async (req, res) => {
+    const talkers = await readFile();
+    const newTalker = { ...req.body, id: talkers.length + 1 };
+    talkers.push(newTalker);
+    await writeFile(talkers);
+    res.status(201).json(newTalker);
+  },
+);
 
 app.listen(PORT, () => {
   console.log('Online');
