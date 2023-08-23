@@ -3,6 +3,7 @@ const fs = require('fs').promises;
 const path = require('path');
 const crypto = require('crypto');
 const validateLogin = require('./middlewares/validateLogin');
+const validateTalker = require('./middlewares/validateTalker');
 
 const app = express();
 app.use(express.json());
@@ -10,6 +11,8 @@ app.use(express.json());
 const HTTP_OK_STATUS = 200;
 const NOT_FOUND_STATUS = 404;
 const PORT = process.env.PORT || '3001';
+const TALKER_PATH = path.resolve(__dirname, './talker.json');
+const ENCODING = 'utf-8';
 
 const generateToken = () => crypto.randomBytes(8).toString('hex');
 
@@ -18,14 +21,15 @@ app.get('/', (_request, response) => {
   response.status(HTTP_OK_STATUS).send();
 });
 
-const TALKER_PATH = path.resolve(__dirname, './talker.json');
-const ENCODING = 'utf-8';
-
 const readFile = async () => {
   const content = await fs.readFile(TALKER_PATH, ENCODING);
   return JSON.parse(content);
 };
 readFile();
+
+const writeFile = async (content) => {
+  await fs.writeFile(TALKER_PATH, JSON.stringify(content));
+};
 
 app.get('/talker', async (_req, res) => {
   const talkers = await readFile();
@@ -45,6 +49,14 @@ app.get('/talker/:id', async (req, res) => {
 
 app.post('/login', validateLogin, async (req, res) => {
   res.status(HTTP_OK_STATUS).json({ token: generateToken() });
+});
+
+app.post('/talker', validateTalker, async (req, res) => {
+  const talkers = await readFile();
+  const newTalker = { ...req.body, id: talkers.length + 1 };
+  talkers.push(newTalker);
+  await writeFile(talkers);
+  res.status(201).json(newTalker);
 });
 
 app.listen(PORT, () => {
