@@ -44,7 +44,7 @@ app.get('/talker/:id', async (req, res) => {
 
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
-  if (email == '' || password == '') {
+  if (!email || !password) {
     return res.status(HTTP_OK_STATUS).json({ message: 'Login ou senha inválidos' });
   }
   res.status(HTTP_OK_STATUS).json({ token: generateToken() });
