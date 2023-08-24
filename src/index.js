@@ -4,7 +4,7 @@ const path = require('path');
 const crypto = require('crypto');
 const validateLogin = require('./middlewares/validateLogin');
 const { 
-  validateToken, validateName, validateAge, validateWachedAt, validateRate, 
+  validateToken, validateName, validateAge, validateWachedAt, validateRate, validateRateParam, 
 } = require('./middlewares/validateTalker');
 
 const app = express();
@@ -34,15 +34,32 @@ const writeFile = async (content) => {
   await fs.writeFile(TALKER_PATH, JSON.stringify(content));
 };
 
-app.get('/talker/search', validateToken, async (req, res) => {
-  const { q } = req.query;
-  const talkers = await readFile();
-  if (q) {
-    const filteredTalkers = talkers.filter((talk) => talk.name.includes(q));
-    return res.status(HTTP_OK_STATUS).json(filteredTalkers);
+app.get('/talker/search', validateToken, validateRateParam, async (req, res) => {
+  const { q, rate } = req.query;
+  if (!q && !rate) {
+    const talkers = await readFile();
+    return res.status(HTTP_OK_STATUS).json(talkers);
   }
-  res.status(HTTP_OK_STATUS).json(talkers);
+  const talkers = await readFile();
+  const filteredByQ = q ? talkers.filter((talk) => talk.name.includes(q)) : talkers;
+  const filteredByRate = rate ? filteredByQ
+    .filter((elem) => elem.talk.rate === parseFloat(rate)) : filteredByQ;
+  res.status(HTTP_OK_STATUS).json(filteredByRate);
 });
+
+//   const talkers = await readFile();
+//   const filteredByQ = q ? talkers.filter((talk) => talk.name.includes(q)) : talkers;
+//   const filteredByRate = rate ? filteredByQ.filter((talk) => talk.rate.includes(rate)) : filteredByQ;
+//   res.status(HTTP_OK_STATUS).json(filteredByRate);
+// });
+
+// app.get('/talker/search', validateToken, async (req, res) => {
+//   const { q } = req.query;
+//   const talkers = await readFile();
+//   if (q) {
+//     const filteredTalkers = talkers.filter((t) => t.talk.rate.includes(q));
+//     return res.status(HTTP_OK_STATUS).json(filteredTalkers);
+//   }
 
 app.get('/talker', async (_req, res) => {
   const talkers = await readFile();
