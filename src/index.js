@@ -3,8 +3,14 @@ const fs = require('fs').promises;
 const path = require('path');
 const crypto = require('crypto');
 const validateLogin = require('./middlewares/validateLogin');
-const { 
-  validateToken, validateName, validateAge, validateWachedAt, validateRate, validateRateParam, 
+const {
+  validateToken,
+  validateName,
+  validateAge,
+  validateWachedAt,
+  validateRate,
+  validateRateParam,
+  validateDate,
 } = require('./middlewares/validateTalker');
 
 const app = express();
@@ -34,32 +40,33 @@ const writeFile = async (content) => {
   await fs.writeFile(TALKER_PATH, JSON.stringify(content));
 };
 
-app.get('/talker/search', validateToken, validateRateParam, async (req, res) => {
-  const { q, rate } = req.query;
-  if (!q && !rate) {
-    const talkers = await readFile();
-    return res.status(HTTP_OK_STATUS).json(talkers);
-  }
+function filterByQ(talk, q) {
+  return talk.name.includes(q);
+}
+
+function filterByRate(talk, rate) {
+  const parsedRate = parseFloat(rate);
+  return talk.talk.rate === parsedRate;
+}
+
+function filterByDate(talk, date) {
+  return talk.talk.watchedAt === date;
+}
+
+function applyFilters(talkers, q, rate, date) {
+  return talkers
+    .filter((talk) => (!q || filterByQ(talk, q)))
+    .filter((talk) => (!rate || filterByRate(talk, rate)))
+    .filter((talk) => (!date || filterByDate(talk, date)));
+}
+app.get('/talker/search', validateToken, validateRateParam, validateDate, async (req, res) => {
+  const { q, rate, date } = req.query;
   const talkers = await readFile();
-  const filteredByQ = q ? talkers.filter((talk) => talk.name.includes(q)) : talkers;
-  const filteredByRate = rate ? filteredByQ
-    .filter((elem) => elem.talk.rate === parseFloat(rate)) : filteredByQ;
-  res.status(HTTP_OK_STATUS).json(filteredByRate);
+  
+  const filteredTalkers = applyFilters(talkers, q, rate, date);
+
+  res.status(HTTP_OK_STATUS).json(filteredTalkers);
 });
-
-//   const talkers = await readFile();
-//   const filteredByQ = q ? talkers.filter((talk) => talk.name.includes(q)) : talkers;
-//   const filteredByRate = rate ? filteredByQ.filter((talk) => talk.rate.includes(rate)) : filteredByQ;
-//   res.status(HTTP_OK_STATUS).json(filteredByRate);
-// });
-
-// app.get('/talker/search', validateToken, async (req, res) => {
-//   const { q } = req.query;
-//   const talkers = await readFile();
-//   if (q) {
-//     const filteredTalkers = talkers.filter((t) => t.talk.rate.includes(q));
-//     return res.status(HTTP_OK_STATUS).json(filteredTalkers);
-//   }
 
 app.get('/talker', async (_req, res) => {
   const talkers = await readFile();

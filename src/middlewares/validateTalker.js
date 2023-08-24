@@ -67,7 +67,17 @@ const validateRateParam = (req, res, next) => {
     });
   }
   next();
-};    
+};
+
+const validateDate = (req, res, next) => {
+  const { date } = req.query;
+  if (date && !date.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+    return res.status(400).json({
+      message: 'O parâmetro "date" deve ter o formato "dd/mm/aaaa"',
+    });
+  }
+  next();
+};
 
 module.exports = {
   validateToken,
@@ -76,4 +86,5 @@ module.exports = {
   validateWachedAt,
   validateRate,
   validateRateParam,
+  validateDate,
 };
