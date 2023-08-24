@@ -11,6 +11,7 @@ const {
   validateRate,
   validateRateParam,
   validateDate,
+  validateRateBody,
 } = require('./middlewares/validateTalker');
 
 const app = express();
@@ -133,6 +134,19 @@ app.delete('/talker/:id', validateToken, async (req, res) => {
     return res.status(NOT_FOUND_STATUS).json({ message: 'Pessoa palestrante não encontrada' });
   }
   talkers.splice(talkerIndex, 1);
+  await writeFile(talkers);
+  res.sendStatus(NO_CONTENT_STATUS);
+});
+
+app.patch('/talker/rate/:id', validateToken, validateRateBody, async (req, res) => {
+  const { id } = req.params;
+  const { rate } = req.body;
+  const talkers = await readFile();
+  const talkerIndex = talkers.findIndex((talk) => talk.id === parseInt(id, 10));
+  if (talkerIndex === -1) {
+    return res.status(NOT_FOUND_STATUS).json({ message: 'Pessoa palestrante não encontrada' });
+  }
+  talkers[talkerIndex].talk.rate = parseFloat(rate);
   await writeFile(talkers);
   res.sendStatus(NO_CONTENT_STATUS);
 });
